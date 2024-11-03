@@ -1,0 +1,5 @@
+.header a {
+    display: flex;
+    gap: 4px;
+    text-decoration: none;
+}
