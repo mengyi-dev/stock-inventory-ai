@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, content="initial-scale=1.0">
+  <title>Export All Data</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .link-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .link-container a {
+      text-decoration: none;
+      color: #007BFF;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Export All Data</h1>
+  <button onclick="exportAllData()">Download All Data as JSON</button>
+  
+  <div class="link-container">
+    <a href="index.html">Back to Point of Sale</a> |
+    <a href="stock-tracking.html">View Stock Tracking</a>
+  </div>
+</div>
+
+<script>
+  function exportAllData() {
+    const salesHistory = JSON.parse(localStorage.getItem('salesHistory')) || [];
+    const stockItems = JSON.parse(localStorage.getItem('stockItems')) || [];
+    const stockHistory = JSON.parse(localStorage.getItem('stockHistory')) || [];
+
+    const allData = {
+      salesHistory: salesHistory,
+      stockItems: stockItems,
+      stockHistory: stockHistory
+    };
+
+    if (salesHistory.length === 0 && stockItems.length === 0 && stockHistory.length === 0) {
+      alert("No data available to export.");
+      return;
+    }
+
+    const dataStr = JSON.stringify(allData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'all_data.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url); // Clean up the URL object
+  }
+</script>
+
+</body>
+</html>

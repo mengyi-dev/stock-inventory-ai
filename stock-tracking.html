@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Tracking</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    .link-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 600px) {
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      th, td {
+        min-width: 120px; /* Ensure minimum width for better readability */
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Stock Tracking History</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Action</th>
+      <th>Timestamp</th>
+    </tr>
+  </thead>
+  <tbody id="historyTableBody"></tbody>
+</table>
+
+<div class="link-container">
+  <a href="index.html">Back to Stock Management</a>
+</div>
+
+<script>
+  const stockHistory = JSON.parse(localStorage.getItem('stockHistory')) || [];
+
+  function displayHistory() {
+    const historyTableBody = document.getElementById('historyTableBody');
+    historyTableBody.innerHTML = '';
+
+    // Check if history is available and display it
+    if (stockHistory.length === 0) {
+      historyTableBody.innerHTML = '<tr><td colspan="2">No history available.</td></tr>';
+      return;
+    }
+
+    stockHistory.forEach(record => {
+      historyTableBody.innerHTML += `
+        <tr>
+          <td>${record.action}</td>
+          <td>${record.timestamp}</td>
+        </tr>
+      `;
+    });
+  }
+
+  displayHistory();
+</script>
+
+</body>
+</html>

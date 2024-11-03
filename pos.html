@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Point of Sale (POS)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    .form-container, .link-container {
+      margin-bottom: 20px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 14px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .form-container button {
+      width: 100%;
+      padding: 12px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+    .form-container button:hover {
+      background-color: #45a049;
+    }
+    .link-container a {
+      text-decoration: none;
+      color: #007BFF;
+      font-size: 16px;
+    }
+    .link-container {
+      text-align: center;
+    }
+    /* Responsive design */
+    @media (max-width: 600px) {
+      th, td {
+        font-size: 12px;
+        padding: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Point of Sale (POS)</h1>
+
+  <div class="form-container">
+    <select id="productSelect" onchange="updateStockQuantity()"></select>
+    <input type="tel" id="saleQuantity" placeholder="Quantity Sold" min="1">
+    <input type="text" id="buyerName" placeholder="Buyer Name">
+    <input type="tel" id="salePrice" placeholder="Enter Price per Unit" min="0" step="0.01">
+    <input type="tel" id="discountAmount" placeholder="Discount Amount" min="0" step="0.01">
+    <button onclick="recordSale()">Record Sale</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Price</th>
+        <th>Quantity Sold</th>
+        <th>Buyer</th>
+        <th>Total Price</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="salesTableBody"></tbody>
+  </table>
+
+  <h2>Audit Log</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Action</th>
+        <th>Details</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="auditLogBody"></tbody>
+  </table>
+
+  <div class="link-container">
+    <a href="index.html">Back to Stock Management</a> |
+    <a href="stock-tracking.html">View Stock Tracking</a>
+  </div>
+</div>
+
+<script>
+  const stockItems = JSON.parse(localStorage.getItem('stockItems')) || [];
+  const salesHistory = JSON.parse(localStorage.getItem('salesHistory')) || [];
+  const auditLog = JSON.parse(localStorage.getItem('auditLog')) || [];
+
+  function populateProductSelect() {
+    const productSelect = document.getElementById('productSelect');
+    productSelect.innerHTML = '<option value="">Select Product</option>';
+
+    stockItems.forEach((item, index) => {
+      productSelect.innerHTML += `<option value="${index}">${item.name} (Available: ${item.quantity})</option>`;
+    });
+  }
+
+  function updateStockQuantity() {
+    const productIndex = document.getElementById('productSelect').value;
+    if (productIndex === "") {
+      document.getElementById('salePrice').value = "";
+    }
+  }
+
+  function recordSale() {
+    const productIndex = document.getElementById('productSelect').value;
+    const saleQuantity = parseInt(document.getElementById('saleQuantity').value);
+    const buyerName = document.getElementById('buyerName').value.trim();
+    const salePrice = parseFloat(document.getElementById('salePrice').value);
+    const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
+
+    if (productIndex === "" || saleQuantity <= 0 || !buyerName || salePrice <= 0) {
+      alert("Please enter valid sale information.");
+      return;
+    }
+
+    const selectedProduct = stockItems[productIndex];
+
+    if (saleQuantity > selectedProduct.quantity) {
+      alert("Insufficient stock.");
+      return;
+    }
+
+    // Deduct from stock
+    selectedProduct.quantity -= saleQuantity;
+    updateStockItems();
+
+    // Calculate total price (including discount)
+    const totalPrice = (salePrice * saleQuantity) - discountAmount;
+    const finalTotalPrice = totalPrice < 0 ? 0 : totalPrice;
+
+    // Add sale to sales history
+    const timestamp = new Date().toLocaleString();
+    salesHistory.push({
+      name: selectedProduct.name,
+      price: salePrice,
+      quantity: saleQuantity,
+      buyer: buyerName,
+      totalPrice: finalTotalPrice,
+      date: timestamp
+    });
+    localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+
+    // Log to audit
+    auditLog.push({
+      action: "Record Sale",
+      details: `${buyerName} bought ${saleQuantity} of ${selectedProduct.name} for $${finalTotalPrice.toFixed(2)}`,
+      date: timestamp
+    });
+    localStorage.setItem('auditLog', JSON.stringify(auditLog));
+
+    console.log(`Sale recorded: ${buyerName} bought ${saleQuantity} of ${selectedProduct.name} for $${finalTotalPrice.toFixed(2)} on ${timestamp}`);
+
+    displaySalesHistory();
+    displayAuditLog();
+    populateProductSelect();
+    document.getElementById('saleQuantity').value = '';
+    document.getElementById('buyerName').value = '';
+    document.getElementById('salePrice').value = '';
+    document.getElementById('discountAmount').value = ''; 
+  }
+
+  function updateStockItems() {
+    localStorage.setItem('stockItems', JSON.stringify(stockItems));
+  }
+
+  function displaySalesHistory() {
+    const salesTableBody = document.getElementById('salesTableBody');
+    salesTableBody.innerHTML = '';
+
+    salesHistory.forEach((sale, index) => {
+      salesTableBody.innerHTML += `
+        <tr>
+          <td>${sale.name}</td>
+          <td>$${sale.price.toFixed(2)}</td>
+          <td>${sale.quantity}</td>
+          <td>${sale.buyer}</td>
+          <td>$${sale.totalPrice.toFixed(2)}</td>
+          <td>${sale.date}</td>
+          <td><button onclick="deleteSale(${index})">Delete</button></td>
+        </tr>
+      `;
+    });
+  }
+
+  function deleteSale(index) {
+    const deletedSale = salesHistory.splice(index, 1)[0];
+    localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+
+    // Log to audit
+    const timestamp = new Date().toLocaleString();
+    auditLog.push({
+      action: "Delete Sale",
+      details: `${deletedSale.buyer} bought ${deletedSale.quantity} of ${deletedSale.name} for $${deletedSale.totalPrice.toFixed(2)}`,
+      date: timestamp
+    });
+    localStorage.setItem('auditLog', JSON.stringify(auditLog));
+
+    console.log(`Sale deleted: ${deletedSale.buyer} bought ${deletedSale.quantity} of ${deletedSale.name} for $${deletedSale.totalPrice.toFixed(2)} on ${deletedSale.date}`);
+    displaySalesHistory();
+    displayAuditLog();
+  }
+
+  function displayAuditLog() {
+    const auditLogBody = document.getElementById('auditLogBody');
+    auditLogBody.innerHTML = '';
+
+    auditLog.forEach(log => {
+      auditLogBody.innerHTML += `
+        <tr>
+          <td>${log.action}</td>
+          <td>${log.details}</td>
+          <td>${log.date}</td>
+        </tr>
+      `;
+    });
+  }
+
+  populateProductSelect();
+  displaySalesHistory();
+  displayAuditLog();
+</script>
+
+</body>
+</html>

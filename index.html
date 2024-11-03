@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS System Home</title>
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .feature-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .feature-item {
+      background-color: #007BFF;
+      color: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      text-align: center;
+      width: 90%;
+      text-decoration: none;
+      font-size: 18px;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feature-item i {
+      margin-right: 10px; /* Space between icon and text */
+    }
+    .feature-item:hover {
+      background-color: #0056b3;
+    }
+    @media (min-width: 600px) {
+      .feature-item {
+        width: 50%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>POS System Features</h1>
+  <div class="feature-container">
+    <a href="pos.html" class="feature-item">
+      <i class="fas fa-cash-register"></i> Point of Sale (កត់ត្រាការលក់)
+    </a>
+    <a href="stock-tracking.html" class="feature-item">
+      <i class="fas fa-box"></i> Stock Tracking (តាមដានស្តុក)
+    </a>
+    <a href="add-stock.html" class="feature-item">
+        <i class="fas fa-plus-circle"></i> Add Stock (បន្ថែមស្តុក)
+    </a>
+    <a href="import.html" class="feature-item">
+      <i class="fas fa-file-import"></i> Import Data (នាំចូលទិន្នន័យ)
+    </a>
+    <a href="export.html" class="feature-item">
+      <i class="fas fa-file-export"></i> Export Data (នាំចេញទិន្នន័យ)
+    </a>
+  </div>
+</div>
+
+</body>
+</html>

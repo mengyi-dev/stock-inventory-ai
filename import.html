@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, content="initial-scale=1.0">
+  <title>Import Data</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    input[type="file"] {
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .link-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .link-container a {
+      text-decoration: none;
+      color: #007BFF;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Import Data</h1>
+  <input type="file" id="fileInput" accept=".json">
+  <button onclick="importData()">Import Data</button>
+
+  <div class="link-container">
+    <a href="index.html">Back to Point of Sale</a> |
+    <a href="stock-tracking.html">View Stock Tracking</a>
+  </div>
+</div>
+
+<script>
+  function importData() {
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("Please select a file to import.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      try {
+        const data = JSON.parse(event.target.result);
+
+        // Update local storage with imported data
+        localStorage.setItem('salesHistory', JSON.stringify(data.salesHistory || []));
+        localStorage.setItem('stockItems', JSON.stringify(data.stockItems || []));
+        localStorage.setItem('stockHistory', JSON.stringify(data.stockHistory || []));
+
+        alert("Data imported successfully!");
+      } catch (error) {
+        alert("Failed to import data. Please ensure the file is a valid JSON.");
+        console.error(error);
+      }
+    };
+
+    reader.readAsText(file);
+  }
+</script>
+
+</body>
+</html>
