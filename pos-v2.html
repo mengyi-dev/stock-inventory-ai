@@ -13,7 +13,7 @@
       margin: 0;
     }
     .container {
-      max-width: 600px;
+      max-width: 800px;
       margin: auto;
     }
     .form-container, .link-container {
@@ -82,7 +82,7 @@
 
 <div class="container">
   <div class="header">
-    <a href="index.html"><i class="fas fa-arrow-left icon"></i>Back Home</a>
+    <a href="index.html"><i class="fas fa-arrow-left icon"></i> Back Home</a>
   </div>
   <h1>Point of Sale (POS)</h1>
 
@@ -99,18 +99,33 @@
     <input type="number" id="salePrice" placeholder="Enter Price per Unit" min="0" step="0.01">
     <input type="number" id="discountAmount" placeholder="Discount Amount" min="0" step="0.01">
     <input type="number" id="deliveryPrice" placeholder="Delivery Price" min="0" step="0.01">
-    <button onclick="recordSale()">Record Sale</button>
+    <button onclick="addProductToOrder()">Add Product to Order</button>
+    <button onclick="recordOrder()">Record Order</button>
   </div>
 
+  <h3>Products in Current Order</h3>
   <table>
     <thead>
       <tr>
         <th>Product</th>
         <th>Price</th>
-        <th>Quantity Sold</th>
+        <th>Quantity</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody id="currentOrderBody"></tbody>
+  </table>
+
+  <h3>Sales History</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Price</th>
+        <th>Quantity</th>
         <th>Buyer</th>
         <th>Total Price</th>
-        <th>Discount Price</th> <!-- Added Discount Price column -->
+        <th>Discount</th>
         <th>Delivery Price</th>
         <th>Date</th>
         <th>Action</th>
@@ -141,9 +156,7 @@
   const stockItems = JSON.parse(localStorage.getItem('stockItems')) || [];
   const salesHistory = JSON.parse(localStorage.getItem('salesHistory')) || [];
   const auditLog = JSON.parse(localStorage.getItem('auditLog')) || [];
-  let totalSales = 0;
-  let totalAmount = 0;
-  let totalDeliveryAmount = 0;
+  let currentOrder = [];
 
   function populateProductSelect() {
     const productSelect = document.getElementById('productSelect');
@@ -161,95 +174,111 @@
     }
   }
 
-  function recordSale() {
+  function addProductToOrder() {
     const productIndex = document.getElementById('productSelect').value;
     const saleQuantity = parseInt(document.getElementById('saleQuantity').value);
-    const buyerName = document.getElementById('buyerName').value.trim();
     const salePrice = parseFloat(document.getElementById('salePrice').value);
-    const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
-    const deliveryPrice = parseFloat(document.getElementById('deliveryPrice').value) || 0;
 
-    if (productIndex === "" || saleQuantity <= 0 || !buyerName || salePrice <= 0) {
-        alert("Please enter valid sale information.");
+    if (productIndex === "" || saleQuantity <= 0 || salePrice <= 0) {
+        alert("Please enter valid product information.");
         return;
     }
 
     const selectedProduct = stockItems[productIndex];
-
     if (saleQuantity > selectedProduct.quantity) {
         alert("Insufficient stock.");
         return;
     }
 
-    // Deduct from stock
-    selectedProduct.quantity -= saleQuantity;
-    updateStockItems();
-
-    // Calculate total price after discount and delivery
-    const baseTotalPrice = salePrice * saleQuantity;
-    const discountedPrice = baseTotalPrice - discountAmount; // Price after discount
-    const finalTotalPrice = discountedPrice - deliveryPrice; // Deduct delivery price
-    const effectivePrice = finalTotalPrice < 0 ? 0 : finalTotalPrice; // Ensure it’s not negative
-
-    // Add sale to sales history
-    const timestamp = new Date().toLocaleString();
-    salesHistory.push({
+    // Add product to current order
+    currentOrder.push({
         name: selectedProduct.name,
         price: salePrice,
         quantity: saleQuantity,
+        total: salePrice * saleQuantity,
+        index: productIndex
+    });
+
+    displayCurrentOrder();
+  }
+
+  function displayCurrentOrder() {
+    const currentOrderBody = document.getElementById('currentOrderBody');
+    currentOrderBody.innerHTML = '';
+
+    currentOrder.forEach((item, index) => {
+      currentOrderBody.innerHTML += `
+        <tr>
+          <td>${item.name}</td>
+          <td>$${item.price.toFixed(2)}</td>
+          <td>${item.quantity}</td>
+          <td>$${item.total.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+  }
+
+  function recordOrder() {
+    const buyerName = document.getElementById('buyerName').value.trim();
+    const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
+    const deliveryPrice = parseFloat(document.getElementById('deliveryPrice').value) || 0;
+
+    if (!buyerName || currentOrder.length === 0) {
+        alert("Please complete the order details.");
+        return;
+    }
+
+    let totalAmount = 0;
+    currentOrder.forEach(item => {
+        stockItems[item.index].quantity -= item.quantity; // Deduct stock
+        totalAmount += item.total;
+    });
+
+    const finalTotal = totalAmount - discountAmount + deliveryPrice;
+    const timestamp = new Date().toLocaleString();
+
+    // Add order to sales history
+    salesHistory.push({
+        products: currentOrder,
         buyer: buyerName,
-        totalPrice: effectivePrice,
-        discountedPrice: discountedPrice < 0 ? 0 : discountedPrice, // Store discounted price
-        deliveryPrice: deliveryPrice,
+        totalAmount: finalTotal,
+        discount: discountAmount,
+        delivery: deliveryPrice,
         date: timestamp
     });
     localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
 
-    // Log to audit
+    // Audit log
     auditLog.push({
-        action: "Record Sale",
-        details: `${buyerName} bought ${saleQuantity} of ${selectedProduct.name} for $${effectivePrice.toFixed(2)} (Discount: $${discountAmount.toFixed(2)}, Delivery: -$${deliveryPrice.toFixed(2)})`,
+        action: "Recorded Order",
+        details: `Order by ${buyerName} with ${currentOrder.length} items for $${finalTotal.toFixed(2)}`,
         date: timestamp
     });
     localStorage.setItem('auditLog', JSON.stringify(auditLog));
 
-    console.log(`Sale recorded: ${buyerName} bought ${saleQuantity} of ${selectedProduct.name} for $${effectivePrice.toFixed(2)} on ${timestamp}`);
-
-    // Update totals
-    totalSales += saleQuantity;
-    totalAmount += baseTotalPrice - discountAmount - deliveryPrice;
-    totalDeliveryAmount += deliveryPrice;
-
+    // Reset current order
+    currentOrder = [];
+    displayCurrentOrder();
     displaySalesHistory();
     displayAuditLog();
     populateProductSelect();
-    updateSummary();
     clearInputs();
-}
-
-
-  function updateStockItems() {
-    localStorage.setItem('stockItems', JSON.stringify(stockItems));
   }
 
   function displaySalesHistory() {
     const salesTableBody = document.getElementById('salesTableBody');
     salesTableBody.innerHTML = '';
 
-    salesHistory.forEach((sale, index) => {
-      salesTableBody.innerHTML += `
-        <tr>
-          <td>${sale.name}</td>
-          <td>$${sale.price.toFixed(2)}</td>
-          <td>${sale.quantity}</td>
-          <td>${sale.buyer}</td>
-          <td>$${sale.totalPrice.toFixed(2)}</td>
-          <td>$${sale.discountedPrice.toFixed(2)}</td> <!-- Display discounted price -->
-          <td>$${sale.deliveryPrice.toFixed(2)}</td>
-          <td>${sale.date}</td>
-          <td><button onclick="deleteSale(${index})">Delete</button></td>
-        </tr>
-      `;
+    salesHistory.forEach(sale => {
+        const products = sale.products.map(product => `${product.name} (x${product.quantity})`).join(', ');
+        salesTableBody.innerHTML += `
+          <tr>
+            <td>${products}</td>
+            <td>$${sale.totalAmount.toFixed(2)}</td>
+            <td>${sale.buyer}</td>
+            <td>${sale.date}</td>
+          </tr>
+        `;
     });
   }
 
@@ -269,42 +298,19 @@
   }
 
   function clearInputs() {
-    document.getElementById('productSelect').value = '';
     document.getElementById('saleQuantity').value = '';
-    document.getElementById('buyerName').value = '';
     document.getElementById('salePrice').value = '';
+    document.getElementById('buyerName').value = '';
     document.getElementById('discountAmount').value = '';
     document.getElementById('deliveryPrice').value = '';
   }
 
-  function deleteSale(index) {
-    salesHistory.splice(index, 1);
-    localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+  window.onload = function() {
+    populateProductSelect();
     displaySalesHistory();
-  }
-
-  function updateSummary() {
-    let totalSales = 0;
-    let totalAmount = 0;
-    let totalDeliveryAmount = 0;
-
-    salesHistory.forEach(sale => {
-      totalSales += sale.quantity;
-      totalAmount += sale.totalPrice; // Total price includes the discount and delivery adjustments
-      totalDeliveryAmount += sale.deliveryPrice;
-    });
-
-    document.getElementById('totalSales').innerText = totalSales;
-    document.getElementById('totalAmount').innerText = totalAmount.toFixed(2);
-    document.getElementById('totalDeliveryAmount').innerText = totalDeliveryAmount.toFixed(2);
-  }
-
-  // Initialize the application
-  populateProductSelect();
-  displaySalesHistory();
-  displayAuditLog();
-  updateSummary();
+    displayAuditLog();
+  };
 </script>
-<script src="/js/main.js"></script>
+
 </body>
 </html>

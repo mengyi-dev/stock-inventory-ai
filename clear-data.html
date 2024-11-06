@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear All Data</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+            text-align: center;
+        }
+        button {
+            padding: 12px;
+            background-color: #f44336;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #d32f2f;
+        }
+        .link-container {
+            margin-top: 20px;
+        }
+        .link-container a {
+            text-decoration: none;
+            color: #007BFF;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Clear All Data</h1>
+    <p>Are you sure you want to clear all sales and stock data?</p>
+    <button onclick="clearAllData()">Clear All Data</button>
+
+    <div class="link-container">
+        <a href="index.html">Back to Home</a>
+    </div>
+
+    <script>
+        function clearAllData() {
+            if (confirm("Are you sure you want to clear all data? This action cannot be undone.")) {
+                localStorage.removeItem('stockItems');
+                localStorage.removeItem('salesHistory');
+                localStorage.removeItem('auditLog');
+                alert("All data has been cleared.");
+                window.location.href = "index.html"; // Redirect to home after clearing
+            }
+        }
+    </script>
+    <script src="/js/main.js"></script>
+</body>
+</html>
